@@ -10,7 +10,7 @@ from ar_models.core import (
     prompt_scene_config,
     slugify,
 )
-from ar_models.site import write_model_page
+from ar_models.site import write_index_page, write_model_page
 
 
 class CoreTests(unittest.TestCase):
@@ -77,6 +77,25 @@ class CoreTests(unittest.TestCase):
         page = output_path.read_text()
         self.assertIn("Download QR code", page)
         self.assertIn("../../assets/models/chips/chips.glb", page)
+
+    def test_write_index_page_embeds_preview_model(self):
+        responses = iter(["", "", "", "", "", "", ""])
+        config = prompt_scene_config(lambda _: next(responses))
+        entry = build_manifest_entry(slug="chips", title="CHiPS", parts=["lv", "rv"], config=config)
+        output_dir = Path.cwd() / ".tmp-tests" / self._testMethodName
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / "index.html"
+
+        write_index_page(output_path, [entry])
+
+        page = output_path.read_text()
+        self.assertIn('<script type="module"', page)
+        self.assertIn('model-viewer src="assets/models/chips/chips.glb"', page)
+        self.assertIn('auto-rotate', page)
+        self.assertIn('aspect-ratio: 1 / 1;', page)
+        self.assertIn("The home page now includes a live preview", page)
 
 
 if __name__ == "__main__":

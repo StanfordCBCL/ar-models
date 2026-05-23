@@ -13,9 +13,14 @@ def write_index_page(output_path: Path, manifest: list[dict[str, object]]) -> No
         cards.append(
             f"""
       <a class="card" href="{entry['page']}">
-        <span class="eyebrow">AR model</span>
-        <h2>{entry['title']}</h2>
-        <p>{len(entry['parts'])} mesh part{'s' if len(entry['parts']) != 1 else ''}</p>
+        <div class="card-preview">
+          <model-viewer src="{entry['glb']}" ios-src="{entry['usdz']}" auto-rotate rotation-per-second="8deg" camera-orbit="45deg 70deg auto" disable-zoom disable-pan disable-tap interaction-prompt="none" pointer-events="none"></model-viewer>
+        </div>
+        <div class="card-copy">
+          <span class="eyebrow">AR model</span>
+          <h2>{entry['title']}</h2>
+          <p>{len(entry['parts'])} mesh part{'s' if len(entry['parts']) != 1 else ''}</p>
+        </div>
       </a>
             """.strip()
         )
@@ -27,6 +32,7 @@ def write_index_page(output_path: Path, manifest: list[dict[str, object]]) -> No
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stanford CBCL AR Models</title>
+  <script type="module" src="{MODEL_VIEWER_CDN}"></script>
   <style>
     :root {{
       --ink: #101820;
@@ -64,8 +70,9 @@ def write_index_page(output_path: Path, manifest: list[dict[str, object]]) -> No
     }}
     .grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
       gap: 1rem;
+      justify-content: start;
     }}
     .card {{
       text-decoration: none;
@@ -73,17 +80,36 @@ def write_index_page(output_path: Path, manifest: list[dict[str, object]]) -> No
       background: var(--card);
       border: 1px solid rgba(16, 24, 32, 0.09);
       border-radius: 8px;
-      padding: 1rem;
-      min-height: 180px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
       box-shadow: 0 18px 36px rgba(16, 24, 32, 0.08);
       transition: transform 180ms ease, box-shadow 180ms ease;
     }}
     .card:hover {{
       transform: translateY(-3px);
       box-shadow: 0 26px 44px rgba(16, 24, 32, 0.12);
+    }}
+    .card-preview {{
+      aspect-ratio: 1 / 1;
+      max-height: 280px;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(140, 21, 21, 0.08), transparent 12rem),
+        linear-gradient(180deg, #f7f0df, #edf4f8);
+      border-bottom: 1px solid rgba(16, 24, 32, 0.09);
+    }}
+    .card-preview model-viewer {{
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }}
+    .card-copy {{
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      flex: 1;
     }}
     .eyebrow {{
       text-transform: uppercase;
@@ -102,7 +128,7 @@ def write_index_page(output_path: Path, manifest: list[dict[str, object]]) -> No
   <main>
     <span class="eyebrow">Stanford CBCL</span>
     <h1>Interactive AR models for scientific anatomy and simulation</h1>
-    <p class="lede">Each entry opens a dedicated model page with Android and iOS AR support, direct asset downloads, and a downloadable QR code for sharing the exact page on mobile.</p>
+    <p class="lede">Each entry opens a dedicated model page with Android and iOS AR support, direct asset downloads, and a downloadable QR code for sharing the exact page on mobile. The home page now includes a live preview so visitors can spot the right model before they click through.</p>
     <section class="grid">
       {"".join(cards) if cards else '<p>No models have been published yet.</p>'}
     </section>

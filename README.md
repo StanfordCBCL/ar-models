@@ -2,6 +2,13 @@
 
 This repository turns `.vtp` and `.vtu` files into AR-ready `.glb` and `.usdz` assets and publishes them as a GitHub Pages site with one page per model.
 
+## Live site
+
+- Website: `https://stanfordcbcl.github.io/ar-models/`
+- Example model page: `https://stanfordcbcl.github.io/ar-models/models/chips10-series5/`
+
+If someone lands on the GitHub repository first, these are the URLs they can use to open the published site directly.
+
 ## Local prerequisites
 
 - `/Applications/ParaView-6.1.0.app`
@@ -46,3 +53,18 @@ The command will:
 - The manifest is `docs/assets/models/manifest.json`
 
 For the Stanford CBCL org workflow, contributors should run the command locally, inspect the result, iterate on Blender parameters if needed, then open a pull request with the generated pages and assets.
+
+## Using the skill
+
+The Codex skill for this workflow lives at `skills/vtk-to-ar/SKILL.md`.
+
+Use it when you want an agent to help convert and publish a model set. The intended flow is:
+
+1. Give the agent the `.vtp` or `.vtu` inputs.
+2. Have the agent ask what Blender modifications you want:
+   scale, centering, rotation, decimation, colors, smoothing, and any part visibility changes.
+3. Let the agent run `./bin/vtk-to-ar ...` and show you the result.
+4. Iterate on those Blender parameters until the model looks right.
+5. Publish the generated `docs/` updates in a pull request.
+
+The skill is designed around iteration, so the agent should keep asking for adjustment requests until you approve the output.
