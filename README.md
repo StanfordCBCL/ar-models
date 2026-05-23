@@ -2,19 +2,16 @@
 
 This repository turns `.vtp` and `.vtu` files into AR-ready `.glb` and `.usdz` assets and publishes them as a GitHub Pages site with one page per model.
 
-## Live site
+Website is live at [https://stanfordcbcl.github.io/ar-models/](https://stanfordcbcl.github.io/ar-models/)
 
-- Website: [https://stanfordcbcl.github.io/ar-models/](https://stanfordcbcl.github.io/ar-models/)
 
-If someone lands on the GitHub repository first, this is the direct link to the published site.
+## Adding a model
 
-## Local prerequisites
+Firstly, you need the following installed locally
 
 - `/Applications/ParaView-6.1.0.app`
 - `/Applications/Blender.app`
 - macOS shell with `/usr/bin/python3`
-
-## Adding a model
 
 There are two good ways to add a model to the site.
 
@@ -62,11 +59,9 @@ Use it when you want an agent to help convert and publish a model set. The inten
 
 The skill is designed around iteration, so the agent should keep asking for adjustment requests until you approve the output.
 
-## Publishing flow
+### Publishing flow
 
 - Generated assets land under `docs/assets/models/<slug>/`
 - Model pages land under `docs/models/<slug>/`
 - The site index is `docs/index.html`
 - The manifest is `docs/assets/models/manifest.json`
-
-For the Stanford CBCL org workflow, contributors should run the command locally, inspect the result, iterate on Blender parameters if needed, then open a pull request with the generated pages and assets.
