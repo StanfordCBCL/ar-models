@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stanford CBCL AR Models</title>
+  <style>
+    :root {
+      --ink: #101820;
+      --accent: #8c1515;
+      --sky: #d7e9f8;
+      --paper: #fbf7ef;
+      --card: rgba(255,255,255,0.84);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background:
+        radial-gradient(circle at top right, rgba(140, 21, 21, 0.16), transparent 30rem),
+        linear-gradient(180deg, var(--paper), #f4f6f8 45%, var(--sky));
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    main {
+      width: min(1100px, calc(100vw - 2rem));
+      margin: 0 auto;
+      padding: 3rem 0 4rem;
+    }
+    h1 {
+      font-size: clamp(2.6rem, 6vw, 4.8rem);
+      line-height: 0.95;
+      margin: 0;
+      max-width: 12ch;
+    }
+    .lede {
+      max-width: 48rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin: 1.25rem 0 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      border: 1px solid rgba(16, 24, 32, 0.09);
+      border-radius: 8px;
+      padding: 1rem;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      box-shadow: 0 18px 36px rgba(16, 24, 32, 0.08);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 26px 44px rgba(16, 24, 32, 0.12);
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+    h2 {
+      margin: 0.5rem 0;
+      font-size: 1.5rem;
+    }
+    p { margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="eyebrow">Stanford CBCL</span>
+    <h1>Interactive AR models for scientific anatomy and simulation</h1>
+    <p class="lede">Each entry opens a dedicated model page with Android and iOS AR support, direct asset downloads, and a downloadable QR code for sharing the exact page on mobile.</p>
+    <section class="grid">
+      <a class="card" href="models/chips10-series5/">
+        <span class="eyebrow">AR model</span>
+        <h2>CHiPS-10 CT Series 5</h2>
+        <p>10 mesh parts</p>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

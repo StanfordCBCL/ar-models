@@ -1,0 +1,32 @@
+{
+  "slug": "chips10-series5",
+  "title": "CHiPS-10 CT Series 5",
+  "page": "models/chips10-series5/",
+  "glb": "assets/models/chips10-series5/chips10-series5.glb",
+  "usdz": "assets/models/chips10-series5/chips10-series5.usdz",
+  "parts": [
+    "aorta",
+    "ivc",
+    "la",
+    "lv",
+    "myo",
+    "pa",
+    "pv",
+    "ra",
+    "rv",
+    "svc"
+  ],
+  "blenderParameters": {
+    "fit_meters": 0.18,
+    "decimate_ratio": 0.3,
+    "centered": true,
+    "shade_smooth": true,
+    "rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "color_mode": "auto",
+    "overwrite": true
+  }
+}

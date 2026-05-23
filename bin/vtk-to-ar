@@ -1,0 +1,5 @@
+#!/bin/zsh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+export PYTHONPATH="$ROOT_DIR/src"
+exec /usr/bin/python3 -m ar_models.cli "$@"

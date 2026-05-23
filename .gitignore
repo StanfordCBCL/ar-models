@@ -1,0 +1,4 @@
+.build/
+.tmp-tests/
+__pycache__/
+*.pyc

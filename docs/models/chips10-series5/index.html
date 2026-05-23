@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHiPS-10 CT Series 5</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
+  <style>
+    :root {
+      --ink: #101820;
+      --accent: #8c1515;
+      --sand: #f7f0df;
+      --panel: rgba(255, 255, 255, 0.9);
+      --line: rgba(16, 24, 32, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(140, 21, 21, 0.18), transparent 28rem),
+        linear-gradient(160deg, #fdf7ea, #edf1f4 56%, #dce7f0);
+    }
+    main {
+      width: min(1180px, calc(100vw - 2rem));
+      margin: 0 auto;
+      padding: 1.5rem 0 3rem;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .topbar a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .viewer,
+    .meta {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 40px rgba(16, 24, 32, 0.08);
+    }
+    .viewer {
+      padding: 1rem;
+    }
+    model-viewer {
+      width: 100%;
+      min-height: 68vh;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(140, 21, 21, 0.08), transparent 16rem),
+        linear-gradient(180deg, var(--sand), #eff4f8);
+      border-radius: 6px;
+    }
+    .meta {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 0.95;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .button {
+      appearance: none;
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 6px;
+      padding: 0.8rem 0.95rem;
+      font: inherit;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+    .button.secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    ul {
+      margin: 0;
+      padding-left: 1.15rem;
+      columns: 2;
+    }
+    pre {
+      margin: 0;
+      padding: 0.75rem;
+      border-radius: 6px;
+      background: #f3efe7;
+      font-size: 0.84rem;
+      overflow: auto;
+    }
+    #qr-preview {
+      width: min(100%, 220px);
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: white;
+      object-fit: contain;
+    }
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+      model-viewer {
+        min-height: 54vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a href="../../">All models</a>
+      <span>Stanford CBCL AR</span>
+    </div>
+    <section class="hero">
+      <div class="viewer">
+        <model-viewer src="../../assets/models/chips10-series5/chips10-series5.glb" ios-src="../../assets/models/chips10-series5/chips10-series5.usdz" ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" camera-controls shadow-intensity="1"></model-viewer>
+      </div>
+      <aside class="meta">
+        <div>
+          <p style="margin:0;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;font-size:0.72rem;">Dedicated model page</p>
+          <h1>CHiPS-10 CT Series 5</h1>
+        </div>
+        <div class="actions">
+          <a class="button" href="../../assets/models/chips10-series5/chips10-series5.glb" download>Download GLB</a>
+          <a class="button secondary" href="../../assets/models/chips10-series5/chips10-series5.usdz" download>Download USDZ</a>
+          <button class="button" id="download-qr" type="button">Download QR code</button>
+          <a class="button secondary" href="../../assets/models/chips10-series5/chips10-series5.glb">Open asset path</a>
+        </div>
+        <div>
+          <h2 style="margin:0 0 0.5rem;font-size:1.15rem;">Mesh parts</h2>
+          <ul><li>aorta</li><li>ivc</li><li>la</li><li>lv</li><li>myo</li><li>pa</li><li>pv</li><li>ra</li><li>rv</li><li>svc</li></ul>
+        </div>
+        <div>
+          <h2 style="margin:0 0 0.5rem;font-size:1.15rem;">QR preview</h2>
+          <img id="qr-preview" alt="QR code preview">
+        </div>
+        <div>
+          <h2 style="margin:0 0 0.5rem;font-size:1.15rem;">Blender parameters</h2>
+          <pre>{
+  "fit_meters": 0.18,
+  "decimate_ratio": 0.3,
+  "centered": true,
+  "shade_smooth": true,
+  "rotation_deg": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "color_mode": "auto",
+  "overwrite": true
+}</pre>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <script>
+    const qrPreview = document.getElementById("qr-preview");
+    const qrButton = document.getElementById("download-qr");
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=720x720&data=${encodeURIComponent(window.location.href)}`;
+    qrPreview.src = qrUrl;
+    qrButton.addEventListener("click", async () => {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "chips10-series5-qr.png";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    });
+  </script>
+</body>
+</html>
