@@ -20,6 +20,7 @@ DEFAULT_PALETTE = [
     "#A5A832",
     "#3C4A8F",
 ]
+FRAME_NUMBER_PATTERN = re.compile(r"(\d+)(?!.*\d)")
 
 
 @dataclass
@@ -36,6 +37,19 @@ class SceneConfig:
         payload = asdict(self)
         payload["rotation_deg"] = list(self.rotation_deg)
         return payload
+
+
+@dataclass(frozen=True)
+class AnimationConfig:
+    frame_count: int
+    fps: int
+    pressure_array: str
+    pressure_divisor: float
+    label_mode: str
+    representative_frame: str
+
+    def payload(self) -> dict[str, object]:
+        return asdict(self)
 
 
 def slugify(value: str) -> str:
@@ -75,6 +89,58 @@ def infer_part_names(files: Iterable[Path]) -> list[str]:
     return [path.stem for path in files]
 
 
+def sort_time_series_files(files: Iterable[Path]) -> list[Path]:
+    return sorted(files, key=_time_series_sort_key)
+
+
+def sample_sequence_indices(
+    total_count: int,
+    sample_count: int,
+    required_indices: Iterable[int] = (),
+) -> list[int]:
+    if total_count <= 0:
+        raise ValueError("Cannot sample an empty sequence.")
+    if sample_count <= 0:
+        raise ValueError("Sample count must be positive.")
+
+    target_count = min(total_count, sample_count)
+    selected = {index for index in required_indices if 0 <= index < total_count}
+    if len(selected) > target_count:
+        raise ValueError("Required indices exceed the sample count.")
+
+    if target_count == total_count:
+        return list(range(total_count))
+
+    denominator = max(target_count - 1, 1)
+    ideal_positions = [index * (total_count - 1) / denominator for index in range(target_count)]
+    for position in ideal_positions:
+        if len(selected) >= target_count:
+            break
+        for candidate in sorted(range(total_count), key=lambda index: (abs(index - position), index)):
+            if candidate not in selected:
+                selected.add(candidate)
+                break
+
+    if len(selected) < target_count:
+        for candidate in range(total_count):
+            if candidate not in selected:
+                selected.add(candidate)
+            if len(selected) >= target_count:
+                break
+    return sorted(selected)
+
+
+def lookup_surface_indices(surface_original_ids: Iterable[int], requested_original_ids: Iterable[int]) -> list[int]:
+    lookup = {int(original_id): index for index, original_id in enumerate(surface_original_ids)}
+    resolved: list[int] = []
+    for original_id in requested_original_ids:
+        key = int(original_id)
+        if key not in lookup:
+            raise KeyError(f"Original point id {key} was not found in the source surface.")
+        resolved.append(lookup[key])
+    return resolved
+
+
 def default_part_colors(part_names: Iterable[str]) -> dict[str, str]:
     colors: dict[str, str] = {}
     for index, name in enumerate(part_names):
@@ -101,6 +167,12 @@ def parse_rotation(text: str) -> tuple[float, float, float]:
     if len(parts) != 3:
         raise ValueError("Rotation must have exactly three comma-separated values.")
     return tuple(float(part) for part in parts)  # type: ignore[return-value]
+
+
+def pressure_to_mmhg(value: float, divisor: float) -> float:
+    if divisor == 0:
+        raise ValueError("Pressure divisor must be non-zero.")
+    return value / divisor
 
 
 def prompt_scene_config(
@@ -150,16 +222,28 @@ def build_manifest_entry(
     title: str,
     parts: list[str],
     config: SceneConfig,
+    animation: dict[str, object] | None = None,
+    pressure_presentation: dict[str, object] | None = None,
+    glb_path: str | None = None,
+    usdz_path: str | None = None,
+    download_glb_path: str | None = None,
 ) -> dict[str, object]:
-    return {
+    entry: dict[str, object] = {
         "slug": slug,
         "title": title,
         "page": f"models/{slug}/",
-        "glb": f"assets/models/{slug}/{slug}.glb",
-        "usdz": f"assets/models/{slug}/{slug}.usdz",
+        "glb": glb_path or f"assets/models/{slug}/{slug}.glb",
+        "usdz": usdz_path or f"assets/models/{slug}/{slug}.usdz",
         "parts": parts,
         "blenderParameters": config.blender_payload(),
     }
+    if download_glb_path is not None:
+        entry["downloadGlb"] = download_glb_path
+    if animation is not None:
+        entry["animation"] = animation
+    if pressure_presentation is not None:
+        entry["pressurePresentation"] = pressure_presentation
+    return entry
 
 
 def load_manifest(path: Path) -> list[dict[str, object]]:
@@ -191,3 +275,11 @@ def _prompt_bool(prompt: Callable[[str], str], label: str, default: bool) -> boo
     if not raw:
         return default
     return raw in {"y", "yes"}
+
+
+def _time_series_sort_key(path: Path) -> tuple[str, int, str]:
+    match = FRAME_NUMBER_PATTERN.search(path.stem)
+    if match is None:
+        return (path.stem, -1, path.name)
+    prefix = path.stem[:match.start()]
+    return (prefix, int(match.group(1)), path.name)

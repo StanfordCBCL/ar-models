@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TST Stan 5 Preop Pressure</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
+  <style>
+    :root {
+      --ink: #101820;
+      --accent: #8c1515;
+      --sand: #f7f0df;
+      --panel: rgba(255, 255, 255, 0.9);
+      --line: rgba(16, 24, 32, 0.12);
+      --pressure-low: rgb(59, 76, 192);
+      --pressure-mid: rgb(221, 221, 221);
+      --pressure-high: rgb(180, 4, 38);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(140, 21, 21, 0.18), transparent 28rem),
+        linear-gradient(160deg, #fdf7ea, #edf1f4 56%, #dce7f0);
+    }
+    main {
+      width: min(1180px, calc(100vw - 2rem));
+      margin: 0 auto;
+      padding: 1.5rem 0 3rem;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .topbar a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .viewer,
+    .meta {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 40px rgba(16, 24, 32, 0.08);
+    }
+    .viewer {
+      padding: 1rem;
+    }
+    model-viewer {
+      width: 100%;
+      min-height: 68vh;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(140, 21, 21, 0.08), transparent 16rem),
+        linear-gradient(180deg, var(--sand), #eff4f8);
+      border-radius: 6px;
+    }
+    .meta {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 0.95;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .button {
+      appearance: none;
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 6px;
+      padding: 0.8rem 0.95rem;
+      font: inherit;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+    .button.secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .meta-card {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.85rem;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    .meta-card h2 {
+      margin: 0 0 0.45rem;
+      font-size: 1.05rem;
+    }
+    .meta-card p {
+      margin: 0.2rem 0;
+      line-height: 1.45;
+    }
+    .legend-bar {
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--pressure-low), var(--pressure-mid), var(--pressure-high));
+      border: 1px solid var(--line);
+      margin: 0.5rem 0;
+    }
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.86rem;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .animation-panel {
+      display: grid;
+      gap: 0.85rem;
+      justify-items: center;
+    }
+    .cycle-slider {
+      width: min(100%, 220px);
+      aspect-ratio: 1;
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      touch-action: none;
+      user-select: none;
+      outline: none;
+    }
+    .cycle-slider::before {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border-radius: 999px;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.36));
+      box-shadow: inset 0 0 0 1px rgba(16, 24, 32, 0.05);
+    }
+    .cycle-slider:hover .cycle-slider-knob,
+    .cycle-slider:focus-visible .cycle-slider-knob,
+    .cycle-slider.is-dragging .cycle-slider-knob {
+      transform: scale(1.08);
+    }
+    .cycle-slider:focus-visible {
+      box-shadow: 0 0 0 4px rgba(140, 21, 21, 0.18);
+      border-radius: 999px;
+    }
+    .cycle-slider.is-dragging {
+      cursor: grabbing;
+    }
+    .cycle-slider-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      position: relative;
+      z-index: 1;
+    }
+    .cycle-slider-track,
+    .cycle-slider-progress,
+    .cycle-slider-hit {
+      fill: none;
+      cx: 80;
+      cy: 80;
+      r: 60;
+    }
+    .cycle-slider-track {
+      stroke: rgba(16, 24, 32, 0.12);
+      stroke-width: 10;
+    }
+    .cycle-slider-progress {
+      stroke: var(--accent);
+      stroke-width: 10;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 80px 80px;
+      transition: stroke-dashoffset 120ms linear;
+    }
+    .cycle-slider-hit {
+      stroke: transparent;
+      stroke-width: 26;
+      cursor: pointer;
+    }
+    .cycle-slider-knob {
+      fill: var(--accent);
+      stroke: white;
+      stroke-width: 4;
+      transition: transform 140ms ease;
+      transform-origin: center;
+    }
+    .cycle-slider-label {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 3rem;
+      text-align: center;
+      font-size: 1rem;
+      line-height: 1.15;
+      font-weight: 600;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .cycle-slider-note {
+      text-align: center;
+    }
+    ul {
+      margin: 0;
+      padding-left: 1.15rem;
+      columns: 2;
+    }
+    pre {
+      margin: 0;
+      padding: 0.75rem;
+      border-radius: 6px;
+      background: #f3efe7;
+      font-size: 0.84rem;
+      overflow: auto;
+    }
+    #qr-preview {
+      width: min(100%, 220px);
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: white;
+      object-fit: contain;
+    }
+    .eyebrow {
+      margin: 0;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+    }
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+      model-viewer {
+        min-height: 54vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a href="../../">All models</a>
+      <span>Stanford CBCL AR</span>
+    </div>
+    <section class="hero">
+      <div class="viewer">
+        <model-viewer id="model-viewer" src="../../assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.glb" ios-src="../../assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.usdz" ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" camera-controls shadow-intensity="1" autoplay animation-loop></model-viewer>
+      </div>
+      <aside class="meta">
+        <div>
+          <p class="eyebrow">Dedicated model page</p>
+          <h1>TST Stan 5 Preop Pressure</h1>
+        </div>
+        <div class="actions">
+          <a class="button" href="../../assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure-static.glb" download>Download GLB</a>
+          <a class="button secondary" href="../../assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.usdz" download>Download USDZ</a>
+          <button class="button" id="download-qr" type="button">Download QR code</button>
+          <a class="button secondary" href="../../assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.glb">Open viewer asset</a>
+        </div>
+        <div class="meta-card">
+          <h2>Animation</h2>
+          <div class="animation-panel">
+            <div
+              class="cycle-slider"
+              id="cycle-slider"
+              role="slider"
+              tabindex="0"
+              aria-label="Cardiac cycle position"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              aria-valuetext="0% of cycle"
+            >
+              <svg class="cycle-slider-svg" id="cycle-slider-svg" viewBox="0 0 160 160" aria-hidden="true">
+                <circle class="cycle-slider-track" cx="80" cy="80" r="60"></circle>
+                <circle class="cycle-slider-progress" id="cycle-progress" cx="80" cy="80" r="60"></circle>
+                <circle class="cycle-slider-hit" cx="80" cy="80" r="60"></circle>
+                <circle class="cycle-slider-knob" id="cycle-knob" cx="80" cy="20" r="9"></circle>
+              </svg>
+              <div class="cycle-slider-label" id="cycle-label">0% of cycle</div>
+            </div>
+            <div class="control-row">
+              <button class="button secondary" id="toggle-play" type="button">Pause animation</button>
+            </div>
+          </div>
+          <p class="cycle-slider-note">28 sampled frames at 12 fps.</p>
+        </div><div class="meta-card">
+          <h2>Pressure Presentation</h2>
+          <div class="legend-bar"></div>
+          <div class="legend-labels">
+            <span>0.0 mmHg</span>
+            <span>46.1 mmHg</span>
+          </div>
+          <p>Static GLB and USDZ downloads use the systolic pressure result.</p>
+        </div>
+        <div class="meta-card">
+          <h2>Mesh parts</h2>
+          <ul><li>pressure-surface</li></ul>
+        </div>
+        <div class="meta-card">
+          <h2>QR preview</h2>
+          <img id="qr-preview" alt="QR code preview">
+        </div>
+        <div class="meta-card">
+          <h2>Blender parameters</h2>
+          <pre>{
+  "fit_meters": 0.18,
+  "decimate_ratio": 0.3,
+  "centered": true,
+  "shade_smooth": true,
+  "rotation_deg": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "color_mode": "vertex",
+  "overwrite": true
+}</pre>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <script>
+    const entry = {"slug": "tst-stan-5-preop-pressure", "title": "TST Stan 5 Preop Pressure", "page": "models/tst-stan-5-preop-pressure/", "glb": "assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.glb", "usdz": "assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.usdz", "parts": ["pressure-surface"], "blenderParameters": {"fit_meters": 0.18, "decimate_ratio": 0.3, "centered": true, "shade_smooth": true, "rotation_deg": [0.0, 0.0, 0.0], "color_mode": "vertex", "overwrite": true}, "downloadGlb": "assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure-static.glb", "animation": {"enabled": true, "frameCount": 28, "fps": 12, "durationSeconds": 2.25, "labelMode": "normalized-cycle", "representativeFrame": {"sampledIndex": 7, "sourceIndex": 20, "sourceName": "result_2400.vtu", "sourceStep": 2400, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-007.ply"}, "viewerAsset": "tst-stan-5-preop-pressure.glb", "viewerVerified": true}, "pressurePresentation": {"arrayName": "Pressure", "unit": "mmHg", "divisor": 1333.2, "rangeMmHg": [0.0, 46.1297], "colorRangeMmHg": [0.0, 46.1297], "vertexCount": 20519, "sampledFrames": [{"sampledIndex": 0, "sourceIndex": 0, "sourceName": "result_2000.vtu", "sourceStep": 2000, "cyclePercent": 0.0, "label": "0% of cycle", "minPressureRaw": 3976.9102785892874, "maxPressureRaw": 8091.125762189905, "minPressureMmHg": 2.983, "maxPressureMmHg": 6.069, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-000.ply"}, {"sampledIndex": 1, "sourceIndex": 1, "sourceName": "result_2020.vtu", "sourceStep": 2020, "cyclePercent": 3.7, "label": "4% of cycle", "minPressureRaw": 1886.6401606031593, "maxPressureRaw": 37925.43891120261, "minPressureMmHg": 1.4151, "maxPressureMmHg": 28.4469, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-001.ply"}, {"sampledIndex": 2, "sourceIndex": 4, "sourceName": "result_2080.vtu", "sourceStep": 2080, "cyclePercent": 7.41, "label": "7% of cycle", "minPressureRaw": 5756.961899510282, "maxPressureRaw": 33305.14548118047, "minPressureMmHg": 4.3182, "maxPressureMmHg": 24.9814, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-002.ply"}, {"sampledIndex": 3, "sourceIndex": 7, "sourceName": "result_2140.vtu", "sourceStep": 2140, "cyclePercent": 11.11, "label": "11% of cycle", "minPressureRaw": 8453.438468231021, "maxPressureRaw": 38413.989415236305, "minPressureMmHg": 6.3407, "maxPressureMmHg": 28.8134, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-003.ply"}, {"sampledIndex": 4, "sourceIndex": 11, "sourceName": "result_2220.vtu", "sourceStep": 2220, "cyclePercent": 14.81, "label": "15% of cycle", "minPressureRaw": 9645.626220089393, "maxPressureRaw": 47238.57938962082, "minPressureMmHg": 7.2349, "maxPressureMmHg": 35.4325, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-004.ply"}, {"sampledIndex": 5, "sourceIndex": 15, "sourceName": "result_2300.vtu", "sourceStep": 2300, "cyclePercent": 18.52, "label": "19% of cycle", "minPressureRaw": 10198.6464733709, "maxPressureRaw": 55962.18689536773, "minPressureMmHg": 7.6497, "maxPressureMmHg": 41.9758, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-005.ply"}, {"sampledIndex": 6, "sourceIndex": 19, "sourceName": "result_2380.vtu", "sourceStep": 2380, "cyclePercent": 22.22, "label": "22% of cycle", "minPressureRaw": 11343.933067974956, "maxPressureRaw": 60524.92390656651, "minPressureMmHg": 8.5088, "maxPressureMmHg": 45.3982, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-006.ply"}, {"sampledIndex": 7, "sourceIndex": 20, "sourceName": "result_2400.vtu", "sourceStep": 2400, "cyclePercent": 25.93, "label": "26% of cycle", "minPressureRaw": 11469.920675418061, "maxPressureRaw": 61500.126643493306, "minPressureMmHg": 8.6033, "maxPressureMmHg": 46.1297, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-007.ply"}, {"sampledIndex": 8, "sourceIndex": 22, "sourceName": "result_2440.vtu", "sourceStep": 2440, "cyclePercent": 29.63, "label": "30% of cycle", "minPressureRaw": 11918.320584377678, "maxPressureRaw": 60044.23106563951, "minPressureMmHg": 8.9396, "maxPressureMmHg": 45.0377, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-008.ply"}, {"sampledIndex": 9, "sourceIndex": 26, "sourceName": "result_2520.vtu", "sourceStep": 2520, "cyclePercent": 33.33, "label": "33% of cycle", "minPressureRaw": 11614.910213548628, "maxPressureRaw": 57526.28344799398, "minPressureMmHg": 8.7121, "maxPressureMmHg": 43.149, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-009.ply"}, {"sampledIndex": 10, "sourceIndex": 30, "sourceName": "result_2600.vtu", "sourceStep": 2600, "cyclePercent": 37.04, "label": "37% of cycle", "minPressureRaw": 13118.984114126895, "maxPressureRaw": 53277.92200471569, "minPressureMmHg": 9.8402, "maxPressureMmHg": 39.9624, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-010.ply"}, {"sampledIndex": 11, "sourceIndex": 33, "sourceName": "result_2660.vtu", "sourceStep": 2660, "cyclePercent": 40.74, "label": "41% of cycle", "minPressureRaw": 14008.14100169384, "maxPressureRaw": 47817.16094270126, "minPressureMmHg": 10.5072, "maxPressureMmHg": 35.8665, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-011.ply"}, {"sampledIndex": 12, "sourceIndex": 37, "sourceName": "result_2740.vtu", "sourceStep": 2740, "cyclePercent": 44.44, "label": "44% of cycle", "minPressureRaw": 14773.861376459308, "maxPressureRaw": 39803.9635020335, "minPressureMmHg": 11.0815, "maxPressureMmHg": 29.856, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-012.ply"}, {"sampledIndex": 13, "sourceIndex": 41, "sourceName": "result_2820.vtu", "sourceStep": 2820, "cyclePercent": 48.15, "label": "48% of cycle", "minPressureRaw": 15508.363823695225, "maxPressureRaw": 33898.89820797542, "minPressureMmHg": 11.6324, "maxPressureMmHg": 25.4267, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-013.ply"}, {"sampledIndex": 14, "sourceIndex": 44, "sourceName": "result_2880.vtu", "sourceStep": 2880, "cyclePercent": 51.85, "label": "52% of cycle", "minPressureRaw": 16179.641139906067, "maxPressureRaw": 26917.489144170828, "minPressureMmHg": 12.1359, "maxPressureMmHg": 20.1901, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-014.ply"}, {"sampledIndex": 15, "sourceIndex": 48, "sourceName": "result_2960.vtu", "sourceStep": 2960, "cyclePercent": 55.56, "label": "56% of cycle", "minPressureRaw": 9484.183796880347, "maxPressureRaw": 23124.389748599195, "minPressureMmHg": 7.1138, "maxPressureMmHg": 17.345, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-015.ply"}, {"sampledIndex": 16, "sourceIndex": 52, "sourceName": "result_3040.vtu", "sourceStep": 3040, "cyclePercent": 59.26, "label": "59% of cycle", "minPressureRaw": 3000.2386527615386, "maxPressureRaw": 24199.85535479653, "minPressureMmHg": 2.2504, "maxPressureMmHg": 18.1517, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-016.ply"}, {"sampledIndex": 17, "sourceIndex": 56, "sourceName": "result_3120.vtu", "sourceStep": 3120, "cyclePercent": 62.96, "label": "63% of cycle", "minPressureRaw": 101.46082346878497, "maxPressureRaw": 26125.83566188307, "minPressureMmHg": 0.0761, "maxPressureMmHg": 19.5963, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-017.ply"}, {"sampledIndex": 18, "sourceIndex": 59, "sourceName": "result_3180.vtu", "sourceStep": 3180, "cyclePercent": 66.67, "label": "67% of cycle", "minPressureRaw": -83.72941333980437, "maxPressureRaw": 25812.97209280445, "minPressureMmHg": -0.0628, "maxPressureMmHg": 19.3617, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-018.ply"}, {"sampledIndex": 19, "sourceIndex": 63, "sourceName": "result_3260.vtu", "sourceStep": 3260, "cyclePercent": 70.37, "label": "70% of cycle", "minPressureRaw": 5512.649856801089, "maxPressureRaw": 26589.353184224885, "minPressureMmHg": 4.1349, "maxPressureMmHg": 19.944, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-019.ply"}, {"sampledIndex": 20, "sourceIndex": 67, "sourceName": "result_3340.vtu", "sourceStep": 3340, "cyclePercent": 74.07, "label": "74% of cycle", "minPressureRaw": 4054.394709708314, "maxPressureRaw": 25036.33954359558, "minPressureMmHg": 3.0411, "maxPressureMmHg": 18.7791, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-020.ply"}, {"sampledIndex": 21, "sourceIndex": 70, "sourceName": "result_3400.vtu", "sourceStep": 3400, "cyclePercent": 77.78, "label": "78% of cycle", "minPressureRaw": 7780.186251393205, "maxPressureRaw": 23434.183220075065, "minPressureMmHg": 5.8357, "maxPressureMmHg": 17.5774, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-021.ply"}, {"sampledIndex": 22, "sourceIndex": 74, "sourceName": "result_3480.vtu", "sourceStep": 3480, "cyclePercent": 81.48, "label": "81% of cycle", "minPressureRaw": 10293.80331692228, "maxPressureRaw": 22654.71308762394, "minPressureMmHg": 7.7211, "maxPressureMmHg": 16.9927, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-022.ply"}, {"sampledIndex": 23, "sourceIndex": 78, "sourceName": "result_3560.vtu", "sourceStep": 3560, "cyclePercent": 85.19, "label": "85% of cycle", "minPressureRaw": 13845.80856102844, "maxPressureRaw": 22246.301766739092, "minPressureMmHg": 10.3854, "maxPressureMmHg": 16.6864, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-023.ply"}, {"sampledIndex": 24, "sourceIndex": 81, "sourceName": "result_3620.vtu", "sourceStep": 3620, "cyclePercent": 88.89, "label": "89% of cycle", "minPressureRaw": 15030.801369573383, "maxPressureRaw": 22456.723163333078, "minPressureMmHg": 11.2742, "maxPressureMmHg": 16.8442, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-024.ply"}, {"sampledIndex": 25, "sourceIndex": 85, "sourceName": "result_3700.vtu", "sourceStep": 3700, "cyclePercent": 92.59, "label": "93% of cycle", "minPressureRaw": 15886.700226507273, "maxPressureRaw": 22894.502713033526, "minPressureMmHg": 11.9162, "maxPressureMmHg": 17.1726, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-025.ply"}, {"sampledIndex": 26, "sourceIndex": 89, "sourceName": "result_3780.vtu", "sourceStep": 3780, "cyclePercent": 96.3, "label": "96% of cycle", "minPressureRaw": 17238.278164055293, "maxPressureRaw": 21421.342346385318, "minPressureMmHg": 12.93, "maxPressureMmHg": 16.0676, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-026.ply"}, {"sampledIndex": 27, "sourceIndex": 100, "sourceName": "result_4000.vtu", "sourceStep": 4000, "cyclePercent": 100.0, "label": "100% of cycle", "minPressureRaw": 18603.514967362386, "maxPressureRaw": 23049.370612393974, "minPressureMmHg": 13.954, "maxPressureMmHg": 17.2888, "ply": "/Users/ndorn/Documents/Stanford/PhD/Marsden_Lab/ar/ar-models/.build/tst-stan-5-preop-pressure/ply/frame-027.ply"}], "colorStrategy": "glb-morph-target-colors", "delivery": "model-viewer", "downloadAssets": {"glbFrame": "result_2400.vtu", "usdzFrame": "result_2400.vtu"}}};
+    const qrPreview = document.getElementById("qr-preview");
+    const qrButton = document.getElementById("download-qr");
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=720x720&data=${encodeURIComponent(window.location.href)}`;
+    qrPreview.src = qrUrl;
+    qrButton.addEventListener("click", async () => {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "tst-stan-5-preop-pressure-qr.png";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    });
+
+    if (entry.animation && entry.pressurePresentation) {
+      const viewer = document.getElementById("model-viewer");
+      const toggleButton = document.getElementById("toggle-play");
+      const slider = document.getElementById("cycle-slider");
+      const cycleLabel = document.getElementById("cycle-label");
+      const progressRing = document.getElementById("cycle-progress");
+      const knob = document.getElementById("cycle-knob");
+      const frames = entry.pressurePresentation.sampledFrames || [];
+      const fallbackDuration = Number(entry.animation.durationSeconds || 0);
+      const sliderRadius = 60;
+      const sliderCenter = 80;
+      const circumference = 2 * Math.PI * sliderRadius;
+      const frameStep = frames.length > 1 ? 1 / (frames.length - 1) : 1;
+      let isScrubbing = false;
+      let wasPlayingBeforeScrub = false;
+      let currentProgress = 0;
+
+      progressRing.style.strokeDasharray = `${circumference}`;
+      progressRing.style.strokeDashoffset = `${circumference}`;
+
+      const frameAtProgress = (progress) => {
+        if (!frames.length) return null;
+        const clamped = Math.max(0, Math.min(1, progress));
+        const frameIndex = Math.min(frames.length - 1, Math.round(clamped * (frames.length - 1)));
+        return frames[frameIndex];
+      };
+
+      const normalizeProgress = (progress) => Math.max(0, Math.min(1, progress));
+
+      const updateSliderVisuals = (progress) => {
+        const clamped = normalizeProgress(progress);
+        currentProgress = clamped;
+        progressRing.style.strokeDashoffset = `${circumference * (1 - clamped)}`;
+        const angle = clamped * Math.PI * 2 - Math.PI / 2;
+        const x = sliderCenter + sliderRadius * Math.cos(angle);
+        const y = sliderCenter + sliderRadius * Math.sin(angle);
+        knob.setAttribute("cx", x.toFixed(3));
+        knob.setAttribute("cy", y.toFixed(3));
+        const frame = frameAtProgress(progress);
+        if (frame) {
+          cycleLabel.textContent = frame.label;
+          const percent = Math.round(clamped * 100);
+          slider.setAttribute("aria-valuenow", String(percent));
+          slider.setAttribute("aria-valuetext", frame.label);
+        } else {
+          const percent = Math.round(clamped * 100);
+          cycleLabel.textContent = `${percent}% of cycle`;
+          slider.setAttribute("aria-valuenow", String(percent));
+          slider.setAttribute("aria-valuetext", `${percent}% of cycle`);
+        }
+      };
+
+      const viewerDuration = () => Number(viewer.duration || fallbackDuration || 0);
+
+      const syncViewerTime = (progress) => {
+        const duration = viewerDuration();
+        if (duration > 0) {
+          viewer.currentTime = normalizeProgress(progress) * duration;
+        }
+      };
+
+      const setPausedUi = () => {
+        toggleButton.textContent = "Play animation";
+      };
+
+      const setPlayingUi = () => {
+        toggleButton.textContent = "Pause animation";
+      };
+
+      const setProgress = (progress, syncViewer = true) => {
+        const clamped = normalizeProgress(progress);
+        if (syncViewer) {
+          syncViewerTime(clamped);
+        }
+        updateSliderVisuals(clamped);
+      };
+
+      const progressFromPointer = (event) => {
+        const rect = slider.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        let angle = Math.atan2(event.clientY - centerY, event.clientX - centerX) + Math.PI / 2;
+        if (angle < 0) {
+          angle += Math.PI * 2;
+        }
+        return angle / (Math.PI * 2);
+      };
+
+      const beginScrub = (event) => {
+        wasPlayingBeforeScrub = !viewer.paused;
+        viewer.pause();
+        setPausedUi();
+        isScrubbing = true;
+        slider.classList.add("is-dragging");
+        slider.setPointerCapture(event.pointerId);
+        setProgress(progressFromPointer(event));
+      };
+
+      const updateAnimationState = () => {
+        const duration = viewerDuration();
+        const currentTime = Number(viewer.currentTime || 0);
+        let progress = 0;
+        if (duration > 0) {
+          const rawProgress = currentTime / duration;
+          progress = viewer.paused ? Math.min(rawProgress, 1) : rawProgress % 1;
+        }
+        if (!isScrubbing) {
+          updateSliderVisuals(progress);
+        }
+        requestAnimationFrame(updateAnimationState);
+      };
+
+      viewer.addEventListener("load", () => {
+        if (viewer.availableAnimations && viewer.availableAnimations.length > 0) {
+          viewer.animationName = viewer.availableAnimations[0];
+        }
+        setProgress(0, false);
+        viewer.play();
+        setPlayingUi();
+      });
+
+      viewer.addEventListener("finished", () => {
+        viewer.currentTime = 0;
+        viewer.play();
+        setPlayingUi();
+      });
+
+      toggleButton.addEventListener("click", () => {
+        if (viewer.paused) {
+          viewer.play();
+          setPlayingUi();
+        } else {
+          viewer.pause();
+          setPausedUi();
+        }
+      });
+
+      slider.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        beginScrub(event);
+      });
+
+      slider.addEventListener("pointermove", (event) => {
+        if (!isScrubbing) {
+          return;
+        }
+        setProgress(progressFromPointer(event));
+      });
+
+      slider.addEventListener("pointerup", (event) => {
+        if (!isScrubbing) {
+          return;
+        }
+        isScrubbing = false;
+        slider.classList.remove("is-dragging");
+        slider.releasePointerCapture(event.pointerId);
+        if (wasPlayingBeforeScrub) {
+          wasPlayingBeforeScrub = false;
+        }
+        viewer.pause();
+        setPausedUi();
+      });
+
+      slider.addEventListener("pointercancel", (event) => {
+        if (!isScrubbing) {
+          return;
+        }
+        isScrubbing = false;
+        slider.classList.remove("is-dragging");
+        slider.releasePointerCapture(event.pointerId);
+        viewer.pause();
+        setPausedUi();
+      });
+
+      slider.addEventListener("keydown", (event) => {
+        let nextProgress = null;
+        if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+          nextProgress = currentProgress - frameStep;
+        } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+          nextProgress = currentProgress + frameStep;
+        } else if (event.key === "Home") {
+          nextProgress = 0;
+        } else if (event.key === "End") {
+          nextProgress = 1;
+        }
+        if (nextProgress === null) {
+          return;
+        }
+        event.preventDefault();
+        viewer.pause();
+        setPausedUi();
+        setProgress(nextProgress);
+      });
+
+      requestAnimationFrame(updateAnimationState);
+    }
+  </script>
+</body>
+</html>
