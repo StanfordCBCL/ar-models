@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stanford CBCL AR Models</title>
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
   <style>
     :root {
       --ink: #101820;
@@ -99,8 +99,8 @@
 <body>
   <main>
     <span class="eyebrow">Stanford CBCL</span>
-    <h1>Interactive AR models</h1>
-    <p class="lede">Each entry opens a dedicated model page with Android and iOS AR support, direct asset downloads, and a downloadable QR code for sharing the exact page on mobile..</p>
+    <h1>Interactive AR models for scientific anatomy and simulation</h1>
+    <p class="lede">Each entry opens a dedicated model page with Android and iOS AR support, direct asset downloads, and a downloadable QR code for sharing the exact page on mobile. Animated entries also expose cycle-aware pressure metadata in mmHg while keeping mobile AR downloads pinned to a representative static frame.</p>
     <section class="grid">
       <a class="card" href="models/chips10-series5/">
         <div class="card-preview">
@@ -110,6 +110,15 @@
           <span class="eyebrow">AR model</span>
           <h2>CHiPS-10 CT Series 5</h2>
           <p>10 mesh parts</p>
+        </div>
+      </a><a class="card" href="models/tst-stan-5-preop-pressure/">
+        <div class="card-preview">
+          <model-viewer src="assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.glb" ios-src="assets/models/tst-stan-5-preop-pressure/tst-stan-5-preop-pressure.usdz" autoplay animation-loop camera-orbit="45deg 70deg auto" disable-zoom disable-pan disable-tap interaction-prompt="none" pointer-events="none"></model-viewer>
+        </div>
+        <div class="card-copy">
+          <span class="eyebrow">Animated AR model</span>
+          <h2>TST Stan 5 Preop Pressure</h2>
+          <p>28 frames at 12 fps</p>
         </div>
       </a>
     </section>
