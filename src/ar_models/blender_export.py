@@ -9,6 +9,9 @@ import bpy
 from mathutils import Euler, Vector
 
 
+IOS_BAKE_TEXTURE_SIZE = 2048
+
+
 def hex_to_rgba(value: str) -> tuple[float, float, float, float]:
     value = value.lstrip("#")
     return (
@@ -28,6 +31,7 @@ def cleanup_scene() -> None:
 
 def make_vertex_color_material(obj: bpy.types.Object, name: str) -> None:
     material = bpy.data.materials.new(name=name)
+    material.use_backface_culling = False
     material.use_nodes = True
     nodes = material.node_tree.nodes
     links = material.node_tree.links
@@ -48,10 +52,31 @@ def make_vertex_color_material(obj: bpy.types.Object, name: str) -> None:
 def make_flat_material(obj: bpy.types.Object, name: str, color: str) -> None:
     material = bpy.data.materials.new(name=name)
     material.diffuse_color = hex_to_rgba(color)
+    material.use_backface_culling = False
     material.use_nodes = True
     bsdf = material.node_tree.nodes.get("Principled BSDF")
     if bsdf is not None:
         bsdf.inputs["Base Color"].default_value = hex_to_rgba(color)
+    obj.data.materials.clear()
+    obj.data.materials.append(material)
+
+
+def make_baked_texture_material(obj: bpy.types.Object, name: str, image: bpy.types.Image) -> None:
+    material = bpy.data.materials.new(name=name)
+    material.use_backface_culling = False
+    material.use_nodes = True
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+    nodes.clear()
+
+    image_node = nodes.new(type="ShaderNodeTexImage")
+    image_node.image = image
+    bsdf = nodes.new(type="ShaderNodeBsdfPrincipled")
+    output = nodes.new(type="ShaderNodeOutputMaterial")
+
+    links.new(image_node.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(bsdf.outputs["BSDF"], output.inputs["Surface"])
+
     obj.data.materials.clear()
     obj.data.materials.append(material)
 
@@ -116,13 +141,36 @@ def apply_decimation(objects: list[bpy.types.Object], ratio: float) -> None:
         modifier.ratio = ratio
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_apply(modifier=modifier.name)
+        repair_mesh_normals(obj)
 
 
 def import_ply(path: Path, name: str) -> bpy.types.Object:
     bpy.ops.wm.ply_import(filepath=str(path))
     obj = bpy.context.object
     obj.name = name
+    repair_mesh_normals(obj)
     return obj
+
+
+def duplicate_mesh_object(source: bpy.types.Object, name: str) -> bpy.types.Object:
+    duplicate = source.copy()
+    duplicate.data = source.data.copy()
+    duplicate.animation_data_clear()
+    duplicate.name = name
+    bpy.context.collection.objects.link(duplicate)
+    return duplicate
+
+
+def repair_mesh_normals(obj: bpy.types.Object) -> None:
+    mesh = obj.data
+    select_only(obj)
+    if getattr(mesh, "has_custom_normals", False):
+        bpy.ops.mesh.customdata_custom_splitnormals_clear()
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    mesh.update()
 
 
 def export_assets(config_path: Path) -> None:
@@ -163,7 +211,9 @@ def export_animated_assets(config: dict[str, object]) -> None:
     fps = int(config["fps"])
 
     base_object = import_ply(representative_ply, "pressure_surface")
+    ios_object = duplicate_mesh_object(base_object, "pressure_surface_ios")
     make_vertex_color_material(base_object, "pressure_surface_vertex")
+    make_vertex_color_material(ios_object, "pressure_surface_ios_vertex")
 
     imported_frames = [base_object]
     shape_sources: list[tuple[int, bpy.types.Object]] = []
@@ -180,6 +230,7 @@ def export_animated_assets(config: dict[str, object]) -> None:
         bpy.data.objects.remove(frame_object, do_unlink=True)
 
     apply_scene_transform(base_object, config, center, scale, rotation)
+    apply_scene_transform(ios_object, config, center, scale, rotation)
     animate_shape_keys(base_object, len(frame_plys), fps, representative_frame_index)
 
     output_glb = Path(config["output_glb"])
@@ -193,17 +244,98 @@ def export_animated_assets(config: dict[str, object]) -> None:
         filepath=str(output_glb),
         export_format="GLB",
         export_animations=True,
+        use_selection=True,
     )
     bpy.context.scene.frame_set(representative_frame_index + 1)
     bpy.ops.export_scene.gltf(
         filepath=str(output_download_glb),
         export_format="GLB",
         export_animations=False,
+        use_selection=True,
     )
-    bpy.ops.wm.usd_export(filepath=str(output_usdz), selected_objects_only=False)
+    bake_vertex_colors_for_ios_usdz(
+        obj=ios_object,
+        output_usdz=output_usdz,
+        texture_size=int(config.get("ios_bake_texture_size", IOS_BAKE_TEXTURE_SIZE)),
+    )
     print(f"wrote {output_glb}")
     print(f"wrote {output_download_glb}")
     print(f"wrote {output_usdz}")
+
+
+def bake_vertex_colors_for_ios_usdz(
+    obj: bpy.types.Object,
+    output_usdz: Path,
+    texture_size: int,
+) -> None:
+    texture_path = output_usdz.with_name(f"{output_usdz.stem}-baked-color.png")
+    image = bpy.data.images.new(
+        name=f"{obj.name}_ios_bake",
+        width=texture_size,
+        height=texture_size,
+        alpha=False,
+    )
+    image.file_format = "PNG"
+    image.filepath_raw = str(texture_path)
+
+    bake_material = bpy.data.materials.new(name=f"{obj.name}_ios_bake")
+    bake_material.use_nodes = True
+    bake_nodes = bake_material.node_tree.nodes
+    bake_links = bake_material.node_tree.links
+    bake_nodes.clear()
+
+    attribute = bake_nodes.new(type="ShaderNodeAttribute")
+    attribute.attribute_name = "Col"
+    emission = bake_nodes.new(type="ShaderNodeEmission")
+    output = bake_nodes.new(type="ShaderNodeOutputMaterial")
+    image_node = bake_nodes.new(type="ShaderNodeTexImage")
+    image_node.image = image
+    bake_nodes.active = image_node
+
+    bake_links.new(attribute.outputs["Color"], emission.inputs["Color"])
+    bake_links.new(emission.outputs["Emission"], output.inputs["Surface"])
+
+    obj.data.materials.clear()
+    obj.data.materials.append(bake_material)
+    ensure_uv_map(obj)
+    bake_object_emission_to_image(obj)
+    image.save()
+
+    make_baked_texture_material(obj, f"{obj.name}_ios_texture", image)
+    select_only(obj)
+    bpy.ops.wm.usd_export(filepath=str(output_usdz), selected_objects_only=True)
+
+    if texture_path.exists():
+        texture_path.unlink()
+
+
+def ensure_uv_map(obj: bpy.types.Object) -> None:
+    mesh = obj.data
+    if not mesh.uv_layers:
+        mesh.uv_layers.new(name="UVMap")
+    select_only(obj)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.smart_project(angle_limit=1.15192, island_margin=0.02)
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+
+def bake_object_emission_to_image(obj: bpy.types.Object) -> None:
+    scene = bpy.context.scene
+    previous_engine = scene.render.engine
+    previous_samples = getattr(scene.cycles, "samples", 1)
+    previous_margin = scene.render.bake.margin
+
+    try:
+        scene.render.engine = "CYCLES"
+        scene.cycles.samples = 1
+        scene.render.bake.margin = 16
+        select_only(obj)
+        bpy.ops.object.bake(type="EMIT")
+    finally:
+        scene.render.engine = previous_engine
+        scene.cycles.samples = previous_samples
+        scene.render.bake.margin = previous_margin
 
 
 def join_shape_keys(base_object: bpy.types.Object, shape_sources: list[tuple[int, bpy.types.Object]]) -> None:

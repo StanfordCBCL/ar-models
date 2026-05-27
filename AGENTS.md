@@ -14,11 +14,11 @@ This repository publishes Stanford CBCL AR models as a static GitHub Pages site.
 - `bin/vtk-to-ar`
   Wrapper that runs `python3 -m ar_models.cli`.
 - `src/ar_models/cli.py`
-  Main pipeline: discover inputs, ask for Blender parameters, run ParaView and Blender, update manifest, regenerate pages.
+  Main pipeline: discover inputs, choose static vs animated mode, ask for Blender parameters, run ParaView and Blender, update manifest, regenerate pages.
 - `src/ar_models/pv_export.py`
-  ParaView-side export from `.vtp` or `.vtu` to intermediate `.ply`.
+  ParaView-side export from `.vtp` or `.vtu` to intermediate `.ply`, including animated frame sampling and representative-frame selection.
 - `src/ar_models/blender_export.py`
-  Blender-side import, transform, decimation, materials, and `.glb` / `.usdz` export.
+  Blender-side import, transform, decimation, normal repair, materials, and `.glb` / `.usdz` export.
 - `src/ar_models/site.py`
   HTML generators for the homepage and the dedicated model pages.
 - `skills/vtk-to-ar/SKILL.md`
@@ -39,7 +39,7 @@ This repository publishes Stanford CBCL AR models as a static GitHub Pages site.
 
 ## Common workflows
 
-### Add a new model
+### Add a new static model
 
 ```bash
 ./bin/vtk-to-ar --name <slug> --title "<Title>" /path/to/input
@@ -47,24 +47,36 @@ This repository publishes Stanford CBCL AR models as a static GitHub Pages site.
 
 The command will prompt for Blender-facing parameters unless `--non-interactive` is passed.
 
+### Add a new animated model
+
+```bash
+./bin/vtk-to-ar --animated --name <slug> --title "<Title>" /path/to/time-series-vtu-dir
+```
+
+Animated exports currently assume a time-series `.vtu` input set and produce:
+
+- an animated viewer GLB at `docs/assets/models/<slug>/<slug>.glb`
+- a representative-frame static GLB at `docs/assets/models/<slug>/<slug>-static.glb`
+- an iOS USDZ at `docs/assets/models/<slug>/<slug>.usdz`
+
 ### Regenerate homepage from the current manifest
 
 ```bash
-cd /Users/aaronbrown/Desktop/Github/ar-models
+cd <repo-root>
 PYTHONPATH=src /usr/bin/python3 -c "from pathlib import Path; from ar_models.core import load_manifest; from ar_models.site import write_index_page; manifest = load_manifest(Path('docs/assets/models/manifest.json')); write_index_page(Path('docs/index.html'), manifest)"
 ```
 
 ### Run tests
 
 ```bash
-cd /Users/aaronbrown/Desktop/Github/ar-models
+cd <repo-root>
 PYTHONPATH=src /usr/bin/python3 -m unittest discover -s tests -v
 ```
 
 ### Local preview
 
 ```bash
-cd /Users/aaronbrown/Desktop/Github/ar-models/docs
+cd <repo-root>/docs
 /usr/bin/python3 -m http.server 8008
 ```
 
@@ -72,13 +84,20 @@ Then open `http://127.0.0.1:8008/`.
 
 ## User interaction expectations
 
+- First determine whether the user wants a static model or an animated time-series model.
 - Ask the user what Blender modifications they want before the final export.
 - Treat scale, centering, rotation, decimation, color handling, smoothing, and part visibility as user-owned choices.
+- For animated exports, also treat frame sampling, representative-frame selection, and point-data array naming as user-visible choices when they are not already fixed.
 - Expect iteration. The intended workflow is generate, review, revise, and regenerate.
 
 ## Known quirks
 
 - Blender may warn that some imported meshes are “not valid.” The current CHiPS sample still exports successfully despite those warnings.
+- Static exports and animated-derived static assets do not use identical geometry paths.
+- Animated exports decimate and select the representative surface in ParaView, then export the viewer GLB and static download assets through the animated Blender path.
+- Animated scalar-field colors for the web viewer are postprocessed into the GLB after Blender export.
+- Animated USDZ output uses a baked-texture iOS path, so Quick Look rendering issues may diverge from the web GLB.
+- If an animated surface looks view-dependent or partially transparent on iOS, check normals and representative-frame surface orientation in the animated pipeline, not only the regular static pipeline.
 - The QR preview and QR download button are client-side and depend on the current page URL.
 - GitHub Pages deployment expects `main` branch with the `/docs` folder selected in repo settings.
 
